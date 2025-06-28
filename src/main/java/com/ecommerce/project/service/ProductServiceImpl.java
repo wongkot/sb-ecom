@@ -4,6 +4,7 @@ import com.ecommerce.project.exceptions.APIException;
 import com.ecommerce.project.exceptions.ResourceNotFoundException;
 import com.ecommerce.project.model.Category;
 import com.ecommerce.project.model.Product;
+import com.ecommerce.project.payload.PaginationResponse;
 import com.ecommerce.project.payload.ProductDTO;
 import com.ecommerce.project.payload.ProductResponse;
 import com.ecommerce.project.repositories.CategoryRepository;
@@ -39,13 +40,12 @@ public class ProductServiceImpl implements ProductService {
     @Value("${project.image_directory}")
     private String imageDirectory;
 
+    @Autowired
+    private PaginationService paginationService;
+
     @Override
-    public ProductResponse getAllProducts(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
-        Sort sortByAndOrder = Sort.by(
-                sortOrder.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC,
-                sortBy
-        );
-        Pageable pageDetails = PageRequest.of(pageNumber, pageSize, sortByAndOrder);
+    public PaginationResponse<ProductDTO> getAllProducts(Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
+        Pageable pageDetails = paginationService.getPageable(pageNumber, pageSize, sortBy, sortOrder);
         Page<Product> productPage = productRepository.findAll(pageDetails);
         List<Product> products = productPage.getContent();
         if (products.isEmpty())
@@ -54,26 +54,15 @@ public class ProductServiceImpl implements ProductService {
         List<ProductDTO> productDTOs = products.stream()
                 .map(product -> modelMapper.map(product, ProductDTO.class))
                 .toList();
-        return new ProductResponse(
-                productDTOs,
-                productPage.getNumber(),
-                productPage.getSize(),
-                productPage.getTotalElements(),
-                productPage.getTotalPages(),
-                productPage.isLast()
-        );
+        return paginationService.getPaginationResponse(productDTOs, productPage);
     }
 
     @Override
-    public ProductResponse searchByCategory(Long categoryId, Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
+    public PaginationResponse<ProductDTO> searchByCategory(Long categoryId, Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new ResourceNotFoundException("Category", "categoryId", categoryId));
 
-        Sort sortByAndOrder = Sort.by(
-                sortOrder.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC,
-                sortBy
-        );
-        Pageable pageDetails = PageRequest.of(pageNumber, pageSize, sortByAndOrder);
+        Pageable pageDetails = paginationService.getPageable(pageNumber, pageSize, sortBy, sortOrder);
         Page<Product> productPage = productRepository.findByCategoryOrderByPriceAsc(category, pageDetails);
         List<Product> products = productPage.getContent();
         if (products.isEmpty())
@@ -82,23 +71,12 @@ public class ProductServiceImpl implements ProductService {
         List<ProductDTO> productDTOs = products.stream()
                 .map(product -> modelMapper.map(product, ProductDTO.class))
                 .toList();
-        return new ProductResponse(
-                productDTOs,
-                productPage.getNumber(),
-                productPage.getSize(),
-                productPage.getTotalElements(),
-                productPage.getTotalPages(),
-                productPage.isLast()
-        );
+        return paginationService.getPaginationResponse(productDTOs, productPage);
     }
 
     @Override
-    public ProductResponse searchByKeyword(String keyword, Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
-        Sort sortByAndOrder = Sort.by(
-                sortOrder.equalsIgnoreCase("asc") ? Sort.Direction.ASC : Sort.Direction.DESC,
-                sortBy
-        );
-        Pageable pageDetails = PageRequest.of(pageNumber, pageSize, sortByAndOrder);
+    public PaginationResponse<ProductDTO> searchByKeyword(String keyword, Integer pageNumber, Integer pageSize, String sortBy, String sortOrder) {
+        Pageable pageDetails = paginationService.getPageable(pageNumber, pageSize, sortBy, sortOrder);
         Page<Product> productPage = productRepository.findByProductNameLikeIgnoreCase('%' + keyword + '%', pageDetails);
         List<Product> products = productPage.getContent();
         if (products.isEmpty())
@@ -107,14 +85,7 @@ public class ProductServiceImpl implements ProductService {
         List<ProductDTO> productDTOs = products.stream()
                 .map(product -> modelMapper.map(product, ProductDTO.class))
                 .toList();
-        return new ProductResponse(
-                productDTOs,
-                productPage.getNumber(),
-                productPage.getSize(),
-                productPage.getTotalElements(),
-                productPage.getTotalPages(),
-                productPage.isLast()
-        );
+        return paginationService.getPaginationResponse(productDTOs, productPage);
     }
 
     @Override
