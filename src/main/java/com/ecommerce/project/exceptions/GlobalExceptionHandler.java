@@ -36,4 +36,10 @@ public class GlobalExceptionHandler {
         APIResponse apiResponse = new APIResponse(e.getMessage(), false);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(apiResponse);
     }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<APIResponse> handleException(Exception e) {
+        APIResponse apiResponse = new APIResponse(e.getMessage(), false);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(apiResponse);
+    }
 }
