@@ -37,6 +37,12 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(apiResponse);
     }
 
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<APIResponse> handleUnauthorizedException(UnauthorizedException e) {
+        APIResponse apiResponse = new APIResponse(e.getMessage(), false);
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(apiResponse);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<APIResponse> handleException(Exception e) {
         APIResponse apiResponse = new APIResponse(e.getMessage(), false);
